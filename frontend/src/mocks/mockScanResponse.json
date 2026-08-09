@@ -1,0 +1,74 @@
+{
+  "url": "https://example.com",
+  "overallScore": 72,
+  "categoryCounts": {
+    "critical": 2,
+    "moderate": 3,
+    "minor": 2
+  },
+  "violations": [
+    {
+      "id": "image-alt",
+      "title": "Images do not have alternative text",
+      "description": "Images need alternative text so users who cannot see the image can understand its purpose.",
+      "impact": "serious",
+      "wcagCriteria": ["1.1.1"],
+      "affectedNodes": 4,
+      "severity": "Critical"
+    },
+    {
+      "id": "color-contrast",
+      "title": "Background and foreground colors do not have enough contrast",
+      "description": "Some text may be difficult to read because there is not enough contrast between the text and its background.",
+      "impact": "serious",
+      "wcagCriteria": ["1.4.3"],
+      "affectedNodes": 8,
+      "severity": "Moderate"
+    },
+    {
+      "id": "link-name",
+      "title": "Links do not have discernible names",
+      "description": "Links should have meaningful text so users can understand where they will go.",
+      "impact": "moderate",
+      "wcagCriteria": ["2.4.4"],
+      "affectedNodes": 3,
+      "severity": "Moderate"
+    },
+    {
+      "id": "label",
+      "title": "Form elements do not have associated labels",
+      "description": "Form controls should have labels so users understand what information they need to enter.",
+      "impact": "moderate",
+      "wcagCriteria": ["1.3.1", "3.3.2"],
+      "affectedNodes": 5,
+      "severity": "Moderate"
+    },
+    {
+      "id": "button-name",
+      "title": "Buttons do not have accessible names",
+      "description": "Buttons should have a clear accessible name describing their purpose.",
+      "impact": "minor",
+      "wcagCriteria": ["4.1.2"],
+      "affectedNodes": 2,
+      "severity": "Minor"
+    },
+    {
+      "id": "heading-order",
+      "title": "Heading levels should only increase by one",
+      "description": "Headings should follow a logical order to make the page easier to navigate.",
+      "impact": "minor",
+      "wcagCriteria": ["1.3.1"],
+      "affectedNodes": 2,
+      "severity": "Minor"
+    },
+    {
+      "id": "html-has-lang",
+      "title": "The HTML element does not have a lang attribute",
+      "description": "The page should specify its primary language so assistive technologies can interpret the content correctly.",
+      "impact": "minor",
+      "wcagCriteria": ["3.1.1"],
+      "affectedNodes": 1,
+      "severity": "Critical"
+    }
+  ]
+}
