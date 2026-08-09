@@ -36,7 +36,7 @@ frontend/
 │   ├── App.jsx
 │   ├── index.css
 │   └── main.jsx
-├── package.json
+|
 └── README.md
 
 Installation
