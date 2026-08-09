@@ -1,14 +1,22 @@
 """
 Gemini AI service for AccessLens Module 4.
 
-This service takes a single accessibility violation and asks Gemini
-to generate:
+This service takes a batch of accessibility violations from one scan
+and asks Gemini, in a single request, to generate for each one:
 
 - plain-English explanation
 - why it matters
 - who is affected
 - suggested fix
 - priority
+
+All violations from a scan are sent in one Gemini call rather than
+one call per violation. A typical scan has several violations, and
+issuing one Gemini request per violation multiplied real API usage
+(and rate-limit exposure) by however many violations were found —
+observed in practice as intermittent 429 "rate limit exceeded"
+errors on scans with several violations. Batching keeps quota usage
+at one request per scan regardless of violation count.
 
 The Gemini API key is read from app.config.
 The API key must never be hardcoded in this file.
@@ -17,9 +25,9 @@ The API key must never be hardcoded in this file.
 import asyncio
 import json
 import re
-import urllib.error
-import urllib.request
-from typing import Any, Dict
+from typing import Any, Dict, List
+
+import httpx
 
 from app.config import GEMINI_API_KEY, GEMINI_MODEL
 
@@ -36,20 +44,20 @@ class GeminiServiceError(Exception):
     """Raised when Gemini cannot generate a valid enrichment result."""
 
 
-def _build_prompt(violation: Dict[str, Any]) -> str:
-    """Build the prompt sent to Gemini."""
+def _build_batch_prompt(violations: List[Dict[str, Any]]) -> str:
+    """Build a single prompt covering every violation in the batch."""
 
-    violation_id = violation.get("id", "")
-    title = violation.get("title", "")
-    description = violation.get("description", "")
-    impact = violation.get("impact", "")
-    wcag_criteria = violation.get("wcagCriteria", [])
+    violation_blocks = []
 
-    return f"""
-You are an expert web accessibility analyst.
+    for violation in violations:
+        violation_id = violation.get("id", "")
+        title = violation.get("title", "")
+        description = violation.get("description", "")
+        impact = violation.get("impact", "")
+        wcag_criteria = violation.get("wcagCriteria", [])
 
-Analyze this accessibility violation.
-
+        violation_blocks.append(
+            f"""
 Violation ID:
 {violation_id}
 
@@ -64,12 +72,26 @@ Impact:
 
 WCAG criteria:
 {json.dumps(wcag_criteria)}
+""".strip()
+        )
 
-Return ONLY a valid JSON object.
+    joined_violations = "\n\n---\n\n".join(violation_blocks)
 
-The JSON object must contain exactly these fields:
+    return f"""
+You are an expert web accessibility analyst.
+
+Analyze EACH of the following accessibility violations. There are
+{len(violations)} violation(s) below, separated by "---".
+
+{joined_violations}
+
+Return ONLY a valid JSON array with exactly one object per violation
+above — {len(violations)} object(s) total, no more and no fewer.
+
+Each object in the array must contain exactly these fields:
 
 {{
+  "id": "The violation's ID, copied exactly as given above.",
   "plainEnglish": "Explain the problem in simple language.",
   "whyItMatters": "Explain why this matters to users.",
   "whoIsAffected": "Explain which users may be affected.",
@@ -91,22 +113,20 @@ Priority rules:
 
 Do not use Markdown.
 Do not use code fences.
-Do not add text before or after the JSON.
+Do not add text before or after the JSON array.
 Do not invent WCAG criteria.
+Do not omit any violation.
+Do not invent violations that were not listed above.
+Every "id" in your response must exactly match one of the violation
+IDs given above.
 """.strip()
 
 
-def _extract_json(text: str) -> Dict[str, Any]:
-    """Extract and parse JSON from Gemini's response."""
-
-    if not isinstance(text, str) or not text.strip():
-        raise GeminiServiceError(
-            "Gemini returned an empty response."
-        )
+def _strip_code_fences(text: str) -> str:
+    """Remove Markdown code fences if Gemini wraps its response in them."""
 
     cleaned = text.strip()
 
-    # Remove Markdown code fences if Gemini returns them.
     cleaned = re.sub(
         r"^```(?:json)?\s*",
         "",
@@ -120,34 +140,26 @@ def _extract_json(text: str) -> Dict[str, Any]:
         cleaned,
     )
 
-    cleaned = cleaned.strip()
+    return cleaned.strip()
 
-    # First: try the complete response.
-    try:
-        result = json.loads(cleaned)
 
-        if isinstance(result, dict):
-            return result
+def _find_balanced_span(
+    text: str,
+    start: int,
+    open_char: str,
+    close_char: str,
+) -> int:
+    """
+    Return the index of the char that closes the bracket opened at
+    `start`, respecting string literals, or -1 if unbalanced.
+    """
 
-    except json.JSONDecodeError:
-        pass
-
-    # Second: search for the first JSON object.
-    start = cleaned.find("{")
-
-    if start == -1:
-        raise GeminiServiceError(
-            "Gemini returned a response that is not valid JSON."
-        )
-
-    # Find a balanced JSON object rather than using rfind("}").
     depth = 0
     in_string = False
     escape = False
-    end = -1
 
-    for index in range(start, len(cleaned)):
-        char = cleaned[index]
+    for index in range(start, len(text)):
+        char = text[index]
 
         if escape:
             escape = False
@@ -164,15 +176,47 @@ def _extract_json(text: str) -> Dict[str, Any]:
         if in_string:
             continue
 
-        if char == "{":
+        if char == open_char:
             depth += 1
 
-        elif char == "}":
+        elif char == close_char:
             depth -= 1
 
             if depth == 0:
-                end = index
-                break
+                return index
+
+    return -1
+
+
+def _extract_json_array(text: str) -> List[Any]:
+    """Extract and parse a JSON array from Gemini's response."""
+
+    if not isinstance(text, str) or not text.strip():
+        raise GeminiServiceError(
+            "Gemini returned an empty response."
+        )
+
+    cleaned = _strip_code_fences(text)
+
+    # First: try the complete response.
+    try:
+        result = json.loads(cleaned)
+
+        if isinstance(result, list):
+            return result
+
+    except json.JSONDecodeError:
+        pass
+
+    # Second: search for the first balanced JSON array.
+    start = cleaned.find("[")
+
+    if start == -1:
+        raise GeminiServiceError(
+            "Gemini returned a response that is not valid JSON."
+        )
+
+    end = _find_balanced_span(cleaned, start, "[", "]")
 
     if end == -1:
         raise GeminiServiceError(
@@ -189,20 +233,34 @@ def _extract_json(text: str) -> Dict[str, Any]:
             "Gemini returned malformed JSON."
         ) from exc
 
-    if not isinstance(result, dict):
+    if not isinstance(result, list):
         raise GeminiServiceError(
-            "Gemini response must be a JSON object."
+            "Gemini response must be a JSON array."
         )
 
     return result
 
 
-def _validate_result(
-    result: Dict[str, Any],
-) -> Dict[str, str]:
-    """Validate Gemini's enrichment response."""
+def _validate_batch_items(
+    items: List[Any],
+    expected_ids: List[str],
+) -> Dict[str, Dict[str, str]]:
+    """
+    Validate each object Gemini returned and index the results by
+    violation id. Items whose id doesn't match anything we asked
+    about are dropped defensively rather than failing the whole
+    batch.
+    """
+
+    if not isinstance(items, list):
+        raise GeminiServiceError(
+            "Gemini response must be a JSON array."
+        )
+
+    expected = set(expected_ids)
 
     required_fields = [
+        "id",
         "plainEnglish",
         "whyItMatters",
         "whoIsAffected",
@@ -210,41 +268,58 @@ def _validate_result(
         "priority",
     ]
 
-    for field in required_fields:
+    results: Dict[str, Dict[str, str]] = {}
 
-        if field not in result:
+    for item in items:
+
+        if not isinstance(item, dict):
             raise GeminiServiceError(
-                f"Gemini response is missing required field: {field}"
+                "Gemini response must be an array of JSON objects."
             )
 
-        if not isinstance(result[field], str):
+        for field in required_fields:
+
+            if field not in item:
+                raise GeminiServiceError(
+                    f"Gemini response is missing required field: {field}"
+                )
+
+            if not isinstance(item[field], str):
+                raise GeminiServiceError(
+                    f"Gemini field '{field}' must be a string."
+                )
+
+            if not item[field].strip():
+                raise GeminiServiceError(
+                    f"Gemini field '{field}' must not be empty."
+                )
+
+        violation_id = item["id"].strip()
+        priority = item["priority"].strip()
+
+        if priority not in {
+            "High",
+            "Medium",
+            "Low",
+        }:
             raise GeminiServiceError(
-                f"Gemini field '{field}' must be a string."
+                "Gemini returned an invalid priority."
             )
 
-        if not result[field].strip():
-            raise GeminiServiceError(
-                f"Gemini field '{field}' must not be empty."
-            )
+        if violation_id not in expected:
+            # Gemini returned an id we never asked about — ignore it
+            # rather than failing the whole batch over it.
+            continue
 
-    priority = result["priority"].strip()
+        results[violation_id] = {
+            "plainEnglish": item["plainEnglish"].strip(),
+            "whyItMatters": item["whyItMatters"].strip(),
+            "whoIsAffected": item["whoIsAffected"].strip(),
+            "suggestedFix": item["suggestedFix"].strip(),
+            "priority": priority,
+        }
 
-    if priority not in {
-        "High",
-        "Medium",
-        "Low",
-    }:
-        raise GeminiServiceError(
-            "Gemini returned an invalid priority."
-        )
-
-    return {
-        "plainEnglish": result["plainEnglish"].strip(),
-        "whyItMatters": result["whyItMatters"].strip(),
-        "whoIsAffected": result["whoIsAffected"].strip(),
-        "suggestedFix": result["suggestedFix"].strip(),
-        "priority": priority,
-    }
+    return results
 
 
 def _call_gemini_sync(
@@ -253,8 +328,13 @@ def _call_gemini_sync(
     """
     Perform the Gemini REST API request.
 
-    Uses Python's standard library, so no additional dependency
-    is required.
+    Uses httpx (already a project dependency, and already used
+    successfully by app/services/pagespeed.py against Google APIs
+    from this same environment). Switched from urllib.request,
+    which was observed to hang until timeout on some networks that
+    perform TLS interception/renegotiation (corporate proxies,
+    antivirus HTTPS scanning, etc.) — httpx's TLS stack handles
+    that renegotiation correctly where urllib/ssl did not.
     """
 
     if not GEMINI_API_KEY:
@@ -278,86 +358,62 @@ def _call_gemini_sync(
         },
     }
 
-    request = urllib.request.Request(
-        GEMINI_API_URL,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "x-goog-api-key": GEMINI_API_KEY,
-        },
-        method="POST",
-    )
-
     try:
 
-        with urllib.request.urlopen(
-            request,
+        response = httpx.post(
+            GEMINI_API_URL,
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY,
+            },
             timeout=GEMINI_TIMEOUT_SECONDS,
-        ) as response:
+        )
 
-            response_body = response.read().decode(
-                "utf-8"
-            )
-
-    except urllib.error.HTTPError as exc:
-
-        try:
-            error_body = exc.read().decode(
-                "utf-8"
-            )
-        except Exception:
-            error_body = ""
-
-        if exc.code == 400:
-            raise GeminiServiceError(
-                "Gemini rejected the request."
-            ) from exc
-
-        if exc.code in (401, 403):
-            raise GeminiServiceError(
-                "Gemini API authentication failed. "
-                "Check the API key."
-            ) from exc
-
-        if exc.code == 404:
-            raise GeminiServiceError(
-                "Gemini model or API endpoint was not found. "
-                f"Configured model: {GEMINI_MODEL}"
-            ) from exc
-
-        if exc.code == 429:
-            raise GeminiServiceError(
-                "Gemini API rate limit exceeded."
-            ) from exc
-
-        raise GeminiServiceError(
-            f"Gemini API returned HTTP {exc.code}."
-        ) from exc
-
-    except urllib.error.URLError as exc:
-
-        raise GeminiServiceError(
-            "Unable to reach Gemini API."
-        ) from exc
-
-    except TimeoutError as exc:
+    except httpx.TimeoutException as exc:
 
         raise GeminiServiceError(
             "Gemini API request timed out."
         ) from exc
 
-    except OSError as exc:
+    except httpx.RequestError as exc:
 
         raise GeminiServiceError(
-            "Unable to connect to Gemini API."
+            "Unable to reach Gemini API."
         ) from exc
+
+    if response.status_code >= 400:
+
+        if response.status_code == 400:
+            raise GeminiServiceError(
+                "Gemini rejected the request."
+            )
+
+        if response.status_code in (401, 403):
+            raise GeminiServiceError(
+                "Gemini API authentication failed. "
+                "Check the API key."
+            )
+
+        if response.status_code == 404:
+            raise GeminiServiceError(
+                "Gemini model or API endpoint was not found. "
+                f"Configured model: {GEMINI_MODEL}"
+            )
+
+        if response.status_code == 429:
+            raise GeminiServiceError(
+                "Gemini API rate limit exceeded."
+            )
+
+        raise GeminiServiceError(
+            f"Gemini API returned HTTP {response.status_code}."
+        )
 
     try:
 
-        response_json = json.loads(
-            response_body
-        )
+        response_json = response.json()
 
     except json.JSONDecodeError as exc:
 
@@ -440,18 +496,32 @@ def _extract_gemini_text(
         ) from exc
 
 
-async def enrich_violation(
-    violation: Dict[str, Any],
-) -> Dict[str, str]:
+async def enrich_violations(
+    violations: List[Dict[str, Any]],
+) -> Dict[str, Dict[str, str]]:
     """
-    Enrich one accessibility violation using Gemini.
+    Enrich a batch of accessibility violations using Gemini in a
+    single request.
 
-    The blocking HTTP request is executed in a worker thread
-    so it does not block FastAPI's event loop.
+    Returns a dict mapping violation id -> enrichment fields. The
+    caller (app/routers/enrich.py) is responsible for looking up
+    each requested violation's id in the result and deciding how to
+    handle any that are missing.
+
+    The blocking HTTP request is executed in a worker thread so it
+    does not block FastAPI's event loop.
     """
 
-    prompt = _build_prompt(
-        violation
+    if not violations:
+        return {}
+
+    expected_ids = [
+        violation.get("id", "")
+        for violation in violations
+    ]
+
+    prompt = _build_batch_prompt(
+        violations
     )
 
     response = await asyncio.to_thread(
@@ -463,10 +533,11 @@ async def enrich_violation(
         response
     )
 
-    result = _extract_json(
+    items = _extract_json_array(
         generated_text
     )
 
-    return _validate_result(
-        result
+    return _validate_batch_items(
+        items,
+        expected_ids,
     )

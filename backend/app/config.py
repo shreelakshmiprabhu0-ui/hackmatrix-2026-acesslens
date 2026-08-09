@@ -32,7 +32,7 @@ GEMINI_API_KEY = os.getenv(
 # This can be changed from the .env file without modifying source code.
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
-    "gemini-3.5-flash",
+    "gemini-2.5-flash",
 ).strip()
 
 

@@ -37,26 +37,40 @@ function Home() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
-          Scan any website for accessibility issues
-        </h2>
-        <p className="mt-2 text-slate-600">
-          Enter a public website URL and AccessLens will audit it for
-          accessibility issues and explain them in plain English.
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
+            A
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">AccessLens</h1>
+            <p className="text-xs text-slate-500">Web Accessibility Analyzer</p>
+          </div>
+        </div>
+      </header>
 
-      <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <UrlForm onSubmit={handleScan} isSubmitting={isScanning} />
+      <main className="max-w-2xl mx-auto px-6 py-16">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+            Scan any website for accessibility issues
+          </h2>
+          <p className="mt-2 text-slate-600">
+            Enter a public website URL and AccessLens will audit it for
+            accessibility issues and explain them in plain English.
+          </p>
+        </div>
 
-        {isScanning && <LoadingState url={scanningUrl} />}
+        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <UrlForm onSubmit={handleScan} isSubmitting={isScanning} />
 
-        {apiError && !isScanning && (
-          <ScanErrorBanner message={apiError} onRetry={() => setApiError('')} />
-        )}
-      </div>
+          {isScanning && <LoadingState url={scanningUrl} />}
+
+          {apiError && !isScanning && (
+            <ScanErrorBanner message={apiError} onRetry={() => setApiError('')} />
+          )}
+        </div>
+      </main>
     </div>
   )
 }

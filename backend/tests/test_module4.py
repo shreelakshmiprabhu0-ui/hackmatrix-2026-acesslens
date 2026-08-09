@@ -42,14 +42,20 @@ SAMPLE_GEMINI_RESULT = {
 }
 
 
-def fake_gemini_response():
+def fake_gemini_response(items):
+    """
+    Build a fake raw Gemini API response whose generated text is a
+    JSON array of enrichment objects (one per violation id), matching
+    what the batched /api/enrich flow now sends and expects back.
+    """
+
     return {
         "candidates": [
             {
                 "content": {
                     "parts": [
                         {
-                            "text": json.dumps(SAMPLE_GEMINI_RESULT)
+                            "text": json.dumps(items)
                         }
                     ]
                 }
@@ -67,12 +73,15 @@ def test_enrich_route_is_registered():
 
 
 def test_valid_enrichment(monkeypatch):
-    async def fake_enrich(violation):
-        return SAMPLE_GEMINI_RESULT
+    async def fake_enrich(violations):
+        return {
+            v["id"]: SAMPLE_GEMINI_RESULT
+            for v in violations
+        }
 
     monkeypatch.setattr(
         gemini,
-        "enrich_violation",
+        "enrich_violations",
         fake_enrich,
     )
 
@@ -127,19 +136,26 @@ def test_multiple_violations(monkeypatch):
         "wcagCriteria": ["1.4.3"],
     }
 
-    async def fake_enrich(violation):
+    async def fake_enrich(violations):
+        # Also asserts that both violations were sent to Gemini in
+        # one batch call, rather than one call per violation.
+        assert len(violations) == 2
+
         return {
-            **SAMPLE_GEMINI_RESULT,
-            "priority": (
-                "High"
-                if violation["id"] == "image-alt"
-                else "Medium"
-            ),
+            v["id"]: {
+                **SAMPLE_GEMINI_RESULT,
+                "priority": (
+                    "High"
+                    if v["id"] == "image-alt"
+                    else "Medium"
+                ),
+            }
+            for v in violations
         }
 
     monkeypatch.setattr(
         gemini,
-        "enrich_violation",
+        "enrich_violations",
         fake_enrich,
     )
 
@@ -193,14 +209,90 @@ def test_gemini_success(monkeypatch):
     monkeypatch.setattr(
         gemini,
         "_call_gemini_sync",
-        lambda prompt: fake_gemini_response(),
+        lambda prompt: fake_gemini_response(
+            [{**SAMPLE_GEMINI_RESULT, "id": SAMPLE_VIOLATION["id"]}]
+        ),
     )
 
     result = asyncio.run(
-        gemini.enrich_violation(SAMPLE_VIOLATION)
+        gemini.enrich_violations([SAMPLE_VIOLATION])
     )
 
-    assert result == SAMPLE_GEMINI_RESULT
+    assert result == {
+        SAMPLE_VIOLATION["id"]: SAMPLE_GEMINI_RESULT
+    }
+
+
+def test_gemini_batches_single_call_for_multiple_violations(monkeypatch):
+    """
+    A batch of several violations must result in exactly one call to
+    _call_gemini_sync, not one call per violation — this is the fix
+    for the intermittent 429 rate-limit errors seen with one Gemini
+    request per violation.
+    """
+
+    violation_two = {
+        **SAMPLE_VIOLATION,
+        "id": "color-contrast",
+    }
+
+    call_count = {"n": 0}
+
+    def fake_call(prompt):
+        call_count["n"] += 1
+        return fake_gemini_response(
+            [
+                {**SAMPLE_GEMINI_RESULT, "id": SAMPLE_VIOLATION["id"]},
+                {**SAMPLE_GEMINI_RESULT, "id": violation_two["id"]},
+            ]
+        )
+
+    monkeypatch.setattr(
+        gemini,
+        "GEMINI_API_KEY",
+        "fake-test-key",
+    )
+
+    monkeypatch.setattr(
+        gemini,
+        "_call_gemini_sync",
+        fake_call,
+    )
+
+    result = asyncio.run(
+        gemini.enrich_violations([SAMPLE_VIOLATION, violation_two])
+    )
+
+    assert call_count["n"] == 1
+    assert set(result.keys()) == {
+        SAMPLE_VIOLATION["id"],
+        violation_two["id"],
+    }
+
+
+def test_gemini_empty_batch_makes_no_call(monkeypatch):
+    def fake_call(prompt):
+        raise AssertionError(
+            "_call_gemini_sync should not be called for an empty batch"
+        )
+
+    monkeypatch.setattr(
+        gemini,
+        "GEMINI_API_KEY",
+        "fake-test-key",
+    )
+
+    monkeypatch.setattr(
+        gemini,
+        "_call_gemini_sync",
+        fake_call,
+    )
+
+    result = asyncio.run(
+        gemini.enrich_violations([])
+    )
+
+    assert result == {}
 
 
 def test_gemini_missing_api_key(monkeypatch):
@@ -215,7 +307,7 @@ def test_gemini_missing_api_key(monkeypatch):
         match="API key is not configured",
     ):
         asyncio.run(
-            gemini.enrich_violation(SAMPLE_VIOLATION)
+            gemini.enrich_violations([SAMPLE_VIOLATION])
         )
 
 
@@ -249,7 +341,7 @@ def test_gemini_malformed_response(monkeypatch):
         match="not valid JSON|malformed JSON",
     ):
         asyncio.run(
-            gemini.enrich_violation(SAMPLE_VIOLATION)
+            gemini.enrich_violations([SAMPLE_VIOLATION])
         )
 
 
@@ -273,7 +365,7 @@ def test_gemini_empty_response(monkeypatch):
         match="no candidates",
     ):
         asyncio.run(
-            gemini.enrich_violation(SAMPLE_VIOLATION)
+            gemini.enrich_violations([SAMPLE_VIOLATION])
         )
 
 
@@ -300,7 +392,7 @@ def test_gemini_api_error(monkeypatch):
         match="HTTP 500",
     ):
         asyncio.run(
-            gemini.enrich_violation(SAMPLE_VIOLATION)
+            gemini.enrich_violations([SAMPLE_VIOLATION])
         )
 
 
@@ -327,19 +419,54 @@ def test_gemini_timeout(monkeypatch):
         match="timed out",
     ):
         asyncio.run(
-            gemini.enrich_violation(SAMPLE_VIOLATION)
+            gemini.enrich_violations([SAMPLE_VIOLATION])
+        )
+
+
+def test_gemini_rate_limit_error(monkeypatch):
+    """
+    Regression test for the intermittent 429s observed in practice
+    with one-call-per-violation. _call_gemini_sync already maps a
+    real 429 to this message (see gemini.py); this confirms
+    enrich_violations() propagates it unchanged.
+    """
+
+    monkeypatch.setattr(
+        gemini,
+        "GEMINI_API_KEY",
+        "fake-test-key",
+    )
+
+    def fake_call(prompt):
+        raise gemini.GeminiServiceError(
+            "Gemini API rate limit exceeded."
+        )
+
+    monkeypatch.setattr(
+        gemini,
+        "_call_gemini_sync",
+        fake_call,
+    )
+
+    with pytest.raises(
+        gemini.GeminiServiceError,
+        match="rate limit exceeded",
+    ):
+        asyncio.run(
+            gemini.enrich_violations([SAMPLE_VIOLATION])
         )
 
 
 def test_ids_are_preserved(monkeypatch):
-    async def fake_enrich(violation):
+    async def fake_enrich(violations):
         return {
-            **SAMPLE_GEMINI_RESULT,
+            v["id"]: dict(SAMPLE_GEMINI_RESULT)
+            for v in violations
         }
 
     monkeypatch.setattr(
         gemini,
-        "enrich_violation",
+        "enrich_violations",
         fake_enrich,
     )
 
@@ -360,12 +487,15 @@ def test_ids_are_preserved(monkeypatch):
 
 
 def test_enrich_api_success(monkeypatch):
-    async def fake_enrich(violation):
-        return SAMPLE_GEMINI_RESULT
+    async def fake_enrich(violations):
+        return {
+            v["id"]: SAMPLE_GEMINI_RESULT
+            for v in violations
+        }
 
     monkeypatch.setattr(
         gemini,
-        "enrich_violation",
+        "enrich_violations",
         fake_enrich,
     )
 
@@ -387,14 +517,14 @@ def test_enrich_api_success(monkeypatch):
 
 
 def test_enrich_api_failure(monkeypatch):
-    async def fake_enrich(violation):
+    async def fake_enrich(violations):
         raise gemini.GeminiServiceError(
             "Gemini API failed."
         )
 
     monkeypatch.setattr(
         gemini,
-        "enrich_violation",
+        "enrich_violations",
         fake_enrich,
     )
 
@@ -408,6 +538,45 @@ def test_enrich_api_failure(monkeypatch):
     )
 
     assert response.status_code in [500, 502, 503]
+
+
+def test_enrich_api_missing_id_in_gemini_result(monkeypatch):
+    """
+    If Gemini's batch response omits one of the requested violation
+    ids (e.g. it only enriched 6 of 7), the router should fail loudly
+    with a 502 rather than silently dropping that issue's AI
+    explanation.
+    """
+
+    async def fake_enrich(violations):
+        # Only return an entry for the first violation, dropping any
+        # others that were requested.
+        first = violations[0]
+        return {first["id"]: SAMPLE_GEMINI_RESULT}
+
+    monkeypatch.setattr(
+        gemini,
+        "enrich_violations",
+        fake_enrich,
+    )
+
+    violation_two = {
+        **SAMPLE_VIOLATION,
+        "id": "color-contrast",
+    }
+
+    response = client.post(
+        "/api/enrich",
+        json={
+            "violations": [
+                SAMPLE_VIOLATION,
+                violation_two,
+            ]
+        },
+    )
+
+    assert response.status_code == 502
+    assert "color-contrast" in response.json()["detail"]
 
 
 def test_real_gemini_connection():
@@ -429,7 +598,7 @@ def test_real_gemini_connection():
 
     model = os.getenv(
         "GEMINI_MODEL",
-        "gemini-2.5-flash",
+        "gemini-3.6-flash",
     )
 
     url = (

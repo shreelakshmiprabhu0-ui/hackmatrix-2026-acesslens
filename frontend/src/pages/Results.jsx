@@ -1,17 +1,103 @@
-import { useState } from "react";
-import mockScanResponse from "../mocks/mockScanResponse.json";
-import ScoreCard from "../components/dashboard/ScoreCard";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import IssueList from "../components/dashboard/IssueList";
 import SeverityFilter from "../components/dashboard/SeverityFilter";
 import ScoreGauge from "../components/charts/ScoreGauge";
 import { exportReport } from "../utils/export";
+import { enrichViolations } from "../api/client";
 
 function Results() {
-  const data = mockScanResponse;
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Real scan data is handed off from Home.jsx via router state
+  const data = location.state?.scanResult;
 
   const [selectedSeverity, setSelectedSeverity] = useState("All");
+  const [enrichment, setEnrichment] = useState({});
+  const [enrichError, setEnrichError] = useState("");
 
-  const [enrichment] = useState({});
+  // Prevent duplicate enrichment requests in React StrictMode.
+  const enrichRequestKeyRef = useRef(null);
+
+  useEffect(() => {
+    if (!data || !data.violations || data.violations.length === 0) {
+      return;
+    }
+
+    const requestKey = data.violations.map((v) => v.id).join(",");
+
+    // Prevent duplicate requests for the same scan.
+    if (enrichRequestKeyRef.current === requestKey) {
+      return;
+    }
+
+    enrichRequestKeyRef.current = requestKey;
+
+    async function loadEnrichment() {
+      setEnrichError("");
+
+      try {
+        const violationsForEnrichment = data.violations.map((v) => ({
+          id: v.id,
+          title: v.title,
+          description: v.description,
+          impact: v.impact,
+          wcagCriteria: v.wcagCriteria,
+        }));
+
+        const result = await enrichViolations(violationsForEnrichment);
+
+        // Convert:
+        //
+        // {
+        //   enrichedViolations: [
+        //     { id: "target-size", ... },
+        //     { id: "color-contrast", ... }
+        //   ]
+        // }
+        //
+        // into:
+        //
+        // {
+        //   "target-size": { ... },
+        //   "color-contrast": { ... }
+        // }
+        //
+        // IssueList.jsx then retrieves:
+        // enrichment[violation.id]
+
+        const byId = {};
+
+        for (const item of result.enrichedViolations || []) {
+          byId[item.id] = item;
+        }
+
+        setEnrichment(byId);
+      } catch (err) {
+        console.error("Enrichment failed:", err);
+
+        setEnrichError(
+          "AI explanations couldn't be loaded right now. The scan results below are still accurate."
+        );
+
+        // Allow retry after a failed request.
+        enrichRequestKeyRef.current = null;
+      }
+    }
+
+    loadEnrichment();
+  }, [data]);
+
+  useEffect(() => {
+    if (!data) {
+      navigate("/", { replace: true });
+    }
+  }, [data, navigate]);
+
+  if (!data) {
+    return null;
+  }
 
   const filteredViolations =
     selectedSeverity === "All"
@@ -26,18 +112,57 @@ function Results() {
     exportReport(data, enrichment);
   };
 
+  const handleRetryEnrichment = async () => {
+    // Mark this scan as being retried.
+    enrichRequestKeyRef.current = data.violations
+      .map((v) => v.id)
+      .join(",");
+
+    setEnrichError("");
+
+    try {
+      const violationsForEnrichment = data.violations.map((v) => ({
+        id: v.id,
+        title: v.title,
+        description: v.description,
+        impact: v.impact,
+        wcagCriteria: v.wcagCriteria,
+      }));
+
+      const result = await enrichViolations(violationsForEnrichment);
+
+      const byId = {};
+
+      for (const item of result.enrichedViolations || []) {
+        byId[item.id] = item;
+      }
+
+      setEnrichment(byId);
+    } catch (err) {
+      console.error("Enrichment retry failed:", err);
+
+      setEnrichError(
+        "AI explanations couldn't be loaded right now. The scan results below are still accurate."
+      );
+
+      // Allow another retry.
+      enrichRequestKeyRef.current = null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
-
       {/* Header */}
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
-
           <div className="flex items-center gap-3">
-
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
+            <button
+              onClick={() => navigate("/")}
+              className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg"
+              aria-label="Scan another website"
+            >
               A
-            </div>
+            </button>
 
             <div>
               <h1 className="text-xl font-bold text-slate-900">
@@ -48,23 +173,21 @@ function Results() {
                 Web Accessibility Analyzer
               </p>
             </div>
-
           </div>
 
-          <div className="hidden sm:block text-sm text-slate-500">
-            Accessibility Report
-          </div>
-
+          <button
+            onClick={() => navigate("/")}
+            className="hidden sm:block text-sm text-slate-500 hover:text-slate-800"
+          >
+            Scan another site
+          </button>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-10">
-
         {/* Page heading */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 mb-8">
-
           <div>
-
             <div className="flex items-center gap-2 mb-3">
               <span className="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">
                 Accessibility Scan
@@ -82,7 +205,6 @@ function Results() {
             <p className="text-slate-500 mt-2 break-all">
               {data.url}
             </p>
-
           </div>
 
           <button
@@ -92,15 +214,29 @@ function Results() {
             <span>↓</span>
             Export Report
           </button>
-
         </div>
+
+        {/* Enrichment error */}
+        {enrichError && (
+          <div
+            role="status"
+            className="mb-8 flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+          >
+            <span>{enrichError}</span>
+
+            <button
+              onClick={handleRetryEnrichment}
+              className="shrink-0 rounded font-medium text-amber-900 underline underline-offset-2 hover:text-amber-950"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Score Overview */}
         <section className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-10">
-
           {/* Score */}
           <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-8 flex flex-col items-center justify-center">
-
             <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">
               Accessibility Score
             </p>
@@ -124,12 +260,10 @@ function Results() {
                 Based on automated accessibility checks
               </p>
             </div>
-
           </div>
 
           {/* Breakdown */}
           <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-bold text-slate-900">
@@ -143,11 +277,11 @@ function Results() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
               {/* Critical */}
               <div className="rounded-2xl bg-red-50 border border-red-100 p-5">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+
                   <span className="text-sm font-semibold text-red-700">
                     Critical
                   </span>
@@ -166,6 +300,7 @@ function Results() {
               <div className="rounded-2xl bg-amber-50 border border-amber-100 p-5">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+
                   <span className="text-sm font-semibold text-amber-700">
                     Moderate
                   </span>
@@ -184,6 +319,7 @@ function Results() {
               <div className="rounded-2xl bg-blue-50 border border-blue-100 p-5">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+
                   <span className="text-sm font-semibold text-blue-700">
                     Minor
                   </span>
@@ -197,17 +333,12 @@ function Results() {
                   Recommended improvements
                 </p>
               </div>
-
             </div>
 
             {/* Summary */}
             <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100">
-
               <div className="flex items-start gap-3">
-
-                <div className="text-lg">
-                  💡
-                </div>
+                <div className="text-lg">💡</div>
 
                 <div>
                   <p className="text-sm font-semibold text-slate-800">
@@ -219,20 +350,14 @@ function Results() {
                     improve the accessibility of this website.
                   </p>
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </section>
 
         {/* Issues */}
         <section>
-
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
-
             <div>
               <h3 className="text-2xl font-bold text-slate-900">
                 Accessibility Issues
@@ -248,31 +373,23 @@ function Results() {
               onChange={setSelectedSeverity}
               categoryCounts={data.categoryCounts}
             />
-
           </div>
 
           <IssueList
             violations={filteredViolations}
             enrichment={enrichment}
           />
-
         </section>
-
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white mt-16">
-
         <div className="max-w-7xl mx-auto px-6 py-6 text-center">
-
           <p className="text-sm text-slate-500">
             AccessLens · Making the web more accessible
           </p>
-
         </div>
-
       </footer>
-
     </div>
   );
 }

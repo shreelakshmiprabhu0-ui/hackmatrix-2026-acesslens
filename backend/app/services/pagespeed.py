@@ -151,6 +151,56 @@ def map_impact_to_severity(
 # ACCESSIBILITY AUDIT DETECTION
 # ---------------------------------------------------------------------------
 
+def _get_accessibility_audit_ids(
+    lighthouse_result: Dict[str, Any],
+) -> Optional[set]:
+    """
+    Return the authoritative set of audit IDs that belong to the
+    "accessibility" category, straight from Lighthouse's own category
+    metadata.
+
+    This is the correct source of truth: `audit.tags` is essentially
+    never populated on individual audit objects in the PageSpeed
+    Insights API response, and any hardcoded ID whitelist will always
+    drift out of date as Lighthouse adds/renames/removes audits. The
+    `categories.accessibility.auditRefs` list is what Lighthouse itself
+    uses to decide which audits count toward the accessibility score,
+    so it's the one place we can trust.
+
+    Returns None if this metadata isn't present, so callers can fall
+    back to the legacy heuristics.
+    """
+
+    categories = lighthouse_result.get("categories")
+
+    if not isinstance(categories, dict):
+        return None
+
+    accessibility = categories.get("accessibility")
+
+    if not isinstance(accessibility, dict):
+        return None
+
+    audit_refs = accessibility.get("auditRefs")
+
+    if not isinstance(audit_refs, list):
+        return None
+
+    ids = set()
+
+    for ref in audit_refs:
+
+        if not isinstance(ref, dict):
+            continue
+
+        ref_id = ref.get("id")
+
+        if isinstance(ref_id, str) and ref_id.strip():
+            ids.add(ref_id.strip().lower())
+
+    return ids if ids else None
+
+
 def _is_accessibility_audit(
     audit_id: str,
     audit: Dict[str, Any],
@@ -203,34 +253,72 @@ def _is_accessibility_audit(
                 ):
                     return True
 
+    # Fallback only: used when the caller couldn't determine the
+    # authoritative auditRefs set (see _get_accessibility_audit_ids).
+    # This list is NOT exhaustive and will miss newer/renamed audits
+    # (e.g. "landmark-one-main", "heading-order", "bypass",
+    # "empty-heading", "target-size", various "aria-required-*"
+    # checks) — it exists only as a last-resort safety net.
     known_accessibility_ids = {
         "accesskeys",
         "aria-allowed-attr",
+        "aria-allowed-role",
+        "aria-command-name",
         "aria-conditional-attr",
+        "aria-deprecated-role",
+        "aria-dialog-name",
         "aria-hidden-body",
         "aria-hidden-focus",
+        "aria-input-field-name",
+        "aria-meter-name",
+        "aria-progressbar-name",
         "aria-prohibited-attr",
+        "aria-required-attr",
+        "aria-required-children",
+        "aria-required-parent",
+        "aria-roles",
+        "aria-text",
+        "aria-toggle-field-name",
+        "aria-tooltip-name",
+        "aria-treeitem-name",
         "aria-valid-attr-value",
         "aria-valid-attr",
+        "bypass",
         "button-name",
         "color-contrast",
+        "definition-list",
+        "dlitem",
         "document-title",
         "duplicate-id-aria",
+        "empty-heading",
         "form-field-multiple-labels",
         "frame-title",
+        "heading-order",
         "html-has-lang",
         "html-lang-valid",
+        "html-xml-lang-mismatch",
+        "identical-links-same-purpose",
         "image-alt",
+        "image-redundant-alt",
+        "input-button-name",
         "input-image-alt",
+        "label-content-name-mismatch",
         "label",
+        "landmark-one-main",
         "link-name",
+        "link-in-text-block",
         "list",
         "listitem",
         "meta-refresh",
+        "meta-viewport",
         "object-alt",
         "select-name",
         "skip-link",
         "tabindex",
+        "target-size",
+        "table-duplicate-name",
+        "table-fake-caption",
+        "td-has-header",
         "td-headers-attr",
         "th-has-data-cells",
         "valid-lang",
@@ -271,13 +359,19 @@ def _is_failed_audit(
 def _is_failed_accessibility_audit(
     audit_id: str,
     audit: Dict[str, Any],
+    accessibility_audit_ids: Optional[set] = None,
 ) -> bool:
 
-    return (
-        _is_accessibility_audit(
+    if accessibility_audit_ids is not None:
+        is_accessibility = audit_id.lower() in accessibility_audit_ids
+    else:
+        is_accessibility = _is_accessibility_audit(
             audit_id,
             audit,
         )
+
+    return (
+        is_accessibility
         and _is_failed_audit(audit)
     )
 
@@ -364,12 +458,46 @@ def _extract_affected_nodes(
 # VIOLATION NORMALIZATION
 # ---------------------------------------------------------------------------
 
+def _extract_impact(
+    audit: Dict[str, Any],
+) -> Optional[str]:
+    """
+    Pull the axe-core impact rating (minor/moderate/serious/critical)
+    for this audit.
+
+    In the real PageSpeed Insights response this lives nested at
+    details.debugData.impact — audits don't carry a top-level "impact"
+    key. We check both: debugData first (the actual location), then a
+    top-level key as a defensive fallback in case that ever changes.
+    """
+
+    details = audit.get("details")
+
+    if isinstance(details, dict):
+
+        debug_data = details.get("debugData")
+
+        if isinstance(debug_data, dict):
+
+            nested_impact = debug_data.get("impact")
+
+            if isinstance(nested_impact, str) and nested_impact.strip():
+                return nested_impact
+
+    top_level_impact = audit.get("impact")
+
+    if isinstance(top_level_impact, str) and top_level_impact.strip():
+        return top_level_impact
+
+    return None
+
+
 def _normalize_violation(
     audit_id: str,
     audit: Dict[str, Any],
 ) -> Violation:
 
-    raw_impact = audit.get("impact")
+    raw_impact = _extract_impact(audit)
 
     return Violation(
         id=audit_id,
@@ -538,6 +666,10 @@ def parse_pagespeed_response(
 
     violations: List[Violation] = []
 
+    accessibility_audit_ids = _get_accessibility_audit_ids(
+        lighthouse_result
+    )
+
     for audit_id, audit in audits.items():
 
         if not isinstance(audit_id, str):
@@ -549,6 +681,7 @@ def parse_pagespeed_response(
         if not _is_failed_accessibility_audit(
             audit_id,
             audit,
+            accessibility_audit_ids,
         ):
             continue
 

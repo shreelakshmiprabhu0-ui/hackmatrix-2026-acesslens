@@ -34,6 +34,11 @@ async def enrich_violations(
     """
     Enrich accessibility violations using Gemini.
 
+    All violations from the request are sent to Gemini in a single
+    batched call (see app/services/gemini.py) rather than one call
+    per violation, to avoid multiplying real API/rate-limit usage by
+    the violation count.
+
     Each input violation is converted into:
     - plainEnglish
     - whyItMatters
@@ -42,25 +47,39 @@ async def enrich_violations(
     - priority
     """
 
+    if not request.violations:
+        return EnrichmentResponse(enrichedViolations=[])
+
+    try:
+        results_by_id = await gemini.enrich_violations(
+            [violation.model_dump() for violation in request.violations]
+        )
+
+    except gemini.GeminiServiceError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to generate accessibility enrichment.",
+        ) from exc
+
     enriched: List[EnrichedViolation] = []
 
     for violation in request.violations:
-        try:
-            ai_result = await gemini.enrich_violation(
-                violation.model_dump()
+        ai_result = results_by_id.get(violation.id)
+
+        if ai_result is None:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=(
+                    "Gemini did not return an enrichment result for "
+                    f"violation id: {violation.id}"
+                ),
             )
-
-        except gemini.GeminiServiceError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=str(exc),
-            ) from exc
-
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="Failed to generate accessibility enrichment.",
-            ) from exc
 
         try:
             enriched_violation = EnrichedViolation(

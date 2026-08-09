@@ -11,7 +11,8 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
 // (UrlForm -> Home.jsx -> scanUrl()) stays exactly the same either way,
 // since both branches return a promise that resolves to a ScanResponse
 // shaped object matching docs/API_CONTRACT.md.
-const USE_MOCK_DATA = true
+const USE_MOCK_DATA =
+  import.meta.env.VITE_USE_MOCK_DATA === "true";
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
