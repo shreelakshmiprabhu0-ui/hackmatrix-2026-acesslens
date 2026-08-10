@@ -338,7 +338,32 @@ an **accessibility learning assistant**.
   🟦 **JSON**         API data, configuration, and mock data
   📝 **Markdown**     Documentation
 
-------------------------------------------------------------------------
+---------------------------------------------------------------------------
+
+## 🤖 AI Usage Disclosure
+
+In accordance with the HackMatrix 2026 guidelines, we are disclosing the AI tools used during the development of AccessLens.
+
+### AI Tools Used During Development
+
+| Tool | Purpose |
+|---|---|
+| **ChatGPT** | Development assistance, debugging, code review, troubleshooting, documentation, and technical guidance |
+| **Claude** | Development assistance, code review, debugging, and problem-solving |
+
+These tools were used as development assistants. The team reviewed, adapted, tested, and integrated the generated suggestions into the project.
+
+### AI Used Within the Project
+
+| Technology | Purpose |
+|---|---|
+| **Google Gemini API** | Generates plain-English explanations, accessibility guidance, and actionable recommendations for detected accessibility violations |
+
+The AI-generated outputs used within AccessLens are processed as part of the application's accessibility-assistance workflow and presented to the developer through the results dashboard.
+
+> **Transparency Statement:** AI tools were used to assist the development process, but the final architecture, implementation, integration, testing, and project decisions were reviewed and carried out by the team.
+
+---------------------------------------------------------------------------
 
 ## 📸 Screenshots
 
