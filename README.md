@@ -22,14 +22,15 @@ Repository](https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens)
 
 ## 📊 Project Presentation
 
-📄 **[View / Download Project PPT](AcessLens.pptx)**
+📄 **[View / Download Project PPT](AccessLens.pptx)**
 
 ## 🎥 Demo Video
 
 ▶️ **[Watch the AccessLens Demo Video](YOUR_DEMO_VIDEO_LINK)**
 
-> Replace `YOUR_DEMO_VIDEO_LINK` with the final YouTube or Google Drive
-> video link before submission.
+## 📚 Project Documentation
+
+📄 **[View Project Documentation](AccessLens_HackMatrix2K26_Documentation.pdf)**
 
 ------------------------------------------------------------------------
 
@@ -538,23 +539,15 @@ hackmatrix-2026-acesslens/
 
 ------------------------------------------------------------------------
 
-## 📦 Deliverables
+## 📦 Project Deliverables
 
-  ---------------------------------------------------------------------------------------
-  Deliverable                         Details
-  ----------------------------------- ---------------------------------------------------
-  🌐 **Live Application**             [AccessLens](https://accesslens-nine.vercel.app/)
-
-  📄 **Project PPT**                  [AcessLens.pptx](AcessLens.pptx)
-
-  🎥 **Demo Video**                   [Watch Demo](YOUR_DEMO_VIDEO_LINK)
-
-  💻 **Source Code**                  Frontend and backend available in this repository
-
-  📸 **Screenshots**                  Product workflow and dashboard screenshots
-  ---------------------------------------------------------------------------------------
-
-------------------------------------------------------------------------
+| Deliverable | Link |
+|---|---|
+| 🌐 **Live Application** | [AccessLens](https://accesslens-nine.vercel.app/) |
+| 📄 **Project PPT** | [AcessLens.pptx](AccessLens.pptx) |
+| 📚 **Project Documentation** | [View Documentation](AccessLens_HackMatrix2K26_Documentation.pdf) |
+| 🎥 **Demo Video** | [Watch Demo](YOUR_DEMO_VIDEO_LINK) |
+| 💻 **Source Code** | [GitHub Repository](https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens) |
 
 ## 🌍 Deployment
 
