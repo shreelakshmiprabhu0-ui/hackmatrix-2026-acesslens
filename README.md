@@ -1,50 +1,54 @@
 # ♿ AccessLens
 
+::: {align="center"}
 ### AI-Powered Web Accessibility Assistant
 
-**Making the web understandable, actionable, and accessible — one website at a time.**
+**Making the web understandable, actionable, and accessible --- one
+website at a time.**
 
 **HackMatrix 2K26 · Team NEXORA**
 
-> AccessLens scans websites for accessibility violations, translates complex WCAG findings into plain English, prioritizes what matters most, and provides actionable code-level fixes — so developers can actually fix accessibility issues instead of just receiving another technical report.
+[🌐 Live Demo](https://accesslens-nine.vercel.app/) · [📂 GitHub
+Repository](https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens)
+:::
 
----
+> AccessLens scans websites for accessibility violations, translates
+> complex WCAG findings into plain English, prioritizes what matters
+> most, and provides actionable code-level fixes --- so developers can
+> actually fix accessibility issues instead of just receiving another
+> technical report.
 
-## 🌐 Live Demo
-
-🚀 **[Launch AccessLens](https://accesslens-nine.vercel.app/)**
-
----
+------------------------------------------------------------------------
 
 ## 📊 Project Presentation
 
 📄 **[View / Download Project PPT](AcessLens.pptx)**
 
----
-
 ## 🎥 Demo Video
 
 ▶️ **[Watch the AccessLens Demo Video](YOUR_DEMO_VIDEO_LINK)**
 
-> The demo video provides a walkthrough of the complete AccessLens workflow, from website scanning to accessibility analysis, AI explanations, recommendations, and report generation.
+> Replace `YOUR_DEMO_VIDEO_LINK` with the final YouTube or Google Drive
+> video link before submission.
 
----
+------------------------------------------------------------------------
 
-# 🎯 The Problem
+## 🎯 The Problem
 
-Millions of websites remain inaccessible to people with visual, motor, and cognitive disabilities.
+Millions of websites remain inaccessible to people with visual, motor,
+and cognitive disabilities.
 
-Although tools such as accessibility auditors can detect technical violations, their reports are often difficult for beginners, students, startups, and small development teams to understand.
+Although accessibility auditing tools can detect technical violations,
+their reports can be difficult for beginners, students, startups, and
+small development teams to understand.
 
-Developers are left with questions like:
+Developers are often left asking:
 
-- What does this violation actually mean?
-- Why does it matter?
-- How serious is it?
-- What should I change in my code?
-- How do I make sure the fix follows WCAG guidelines?
-
-As a result, accessibility issues can remain unresolved even after being detected.
+-   What does this violation actually mean?
+-   Why does it matter?
+-   How serious is it?
+-   What should I change in my code?
+-   How do I make sure the fix follows WCAG guidelines?
 
 ### The gap
 
@@ -52,27 +56,29 @@ As a result, accessibility issues can remain unresolved even after being detecte
 
 AccessLens bridges that gap.
 
----
+------------------------------------------------------------------------
 
-# 💡 Our Solution
+## 💡 Our Solution
 
-**AccessLens** is an AI-powered accessibility assistant that converts technical accessibility audit results into **clear, prioritized, developer-friendly actions**.
+**AccessLens** is an AI-powered accessibility assistant that converts
+technical accessibility audit results into clear, prioritized,
+developer-friendly actions.
 
-Instead of simply saying:
+Instead of simply reporting:
 
-> ❌ `Image elements do not have [alt] attributes`
+> `Image elements do not have [alt] attributes`
 
 AccessLens helps the developer understand:
 
-> 🧠 What the issue means  
-> ⚠️ Why it matters  
-> 📌 How severe it is  
-> 💻 How to fix it  
-> 📚 What accessibility principle it relates to
+-   🧠 What the issue means
+-   ⚠️ Why it matters
+-   📌 How severe it is
+-   💻 How to fix it
+-   📚 What accessibility principle it relates to
 
-### The core idea
+### The Core Idea
 
-```text
+``` text
 Technical Accessibility Data
             ↓
       AccessLens Engine
@@ -84,112 +90,159 @@ Technical Accessibility Data
        Code-Level Fixes
             ↓
    More Accessible Websites
-⚙️ How AccessLens Works
-Step 1 — Enter Website URL
+```
+
+------------------------------------------------------------------------
+
+## ⚙️ How AccessLens Works
+
+### Step 1 --- Enter Website URL
 
 The developer provides the URL of a publicly accessible website.
 
-Step 2 — Accessibility Scan
+### Step 2 --- Accessibility Scan
 
-AccessLens performs an automated accessibility audit using the accessibility scanning infrastructure.
+AccessLens performs an automated accessibility audit using the
+accessibility scanning infrastructure.
 
-Step 3 — Detect Violations
+### Step 3 --- Detect Violations
 
-The system identifies accessibility violations and maps them to relevant WCAG criteria.
+The system identifies accessibility violations and maps them to relevant
+WCAG criteria.
 
-Step 4 — AI Explanation
+### Step 4 --- AI Explanation
 
-The detected issues are passed through the AI-powered accessibility assistant.
+The detected issues are passed through the AI-powered accessibility
+assistant.
 
-Technical findings are transformed into understandable explanations.
+Technical findings are transformed into clear, understandable
+explanations.
 
-Step 5 — Prioritize Issues
+### Step 5 --- Prioritize Issues
 
 Issues are organized according to severity:
 
-🔴 Critical
-🟠 Moderate
-🔵 Minor
+-   🔴 **Critical**
+-   🟠 **Moderate**
+-   🔵 **Minor**
 
 This helps developers focus on the problems that matter most first.
 
-Step 6 — Generate Fixes
+### Step 6 --- Generate Fixes
 
-AccessLens provides practical, code-level recommendations to help developers resolve the detected issue.
+AccessLens provides practical, code-level recommendations to help
+developers resolve detected accessibility issues.
 
-Step 7 — Accessibility Dashboard
+### Step 7 --- Accessibility Dashboard
 
 The dashboard presents:
 
-Accessibility score
-Issue count
-Severity distribution
-WCAG criteria
-Affected elements
-AI-powered explanations
-Recommended fixes
-Step 8 — Export Report
+-   📊 Accessibility score
+-   🔢 Issue count
+-   ⚠️ Severity distribution
+-   📋 WCAG criteria
+-   🎯 Affected elements
+-   🤖 AI-powered explanations
+-   💻 Recommended fixes
 
-Developers can export the accessibility analysis as a downloadable report for documentation, review, or further development.
+### Step 8 --- Export Report
 
-✨ Key Features
-Feature	Description
-🔍 Automated Accessibility Scan	Scan a public website for accessibility issues
-🤖 AI-Powered Explanations	Converts technical findings into plain English
-⚠️ Severity Prioritization	Separates critical, moderate, and minor issues
-💻 Code-Level Fix Suggestions	Provides actionable recommendations for developers
-📊 Accessibility Score	Gives an easy-to-understand overview of website accessibility
-📋 WCAG Mapping	Connects violations to relevant WCAG criteria
-🎯 Affected Element Details	Shows which elements are responsible for each issue
-📚 Accessibility Guidance	Helps developers understand accessibility concepts
-📄 Exportable Reports	Generate downloadable accessibility reports
-🌐 Web-Based Interface	No local accessibility tooling required for end users
-🧠 AI-Powered Accessibility Assistance
+Developers can export the accessibility analysis as a downloadable
+report for documentation, review, or further development.
 
-Traditional accessibility tools are excellent at finding problems.
+------------------------------------------------------------------------
+
+## ✨ Key Features
+
+  -----------------------------------------------------------------------
+  Feature                             Description
+  ----------------------------------- -----------------------------------
+  🔍 **Automated Accessibility Scan** Scan a public website for
+                                      accessibility issues
+
+  🤖 **AI-Powered Explanations**      Converts technical findings into
+                                      plain-English explanations
+
+  ⚠️ **Severity Prioritization**      Separates critical, moderate, and
+                                      minor issues
+
+  💻 **Code-Level Fix Suggestions**   Provides actionable recommendations
+                                      for developers
+
+  📊 **Accessibility Score**          Provides an easy-to-understand
+                                      overview of website accessibility
+
+  📋 **WCAG Mapping**                 Connects detected violations to
+                                      relevant WCAG criteria
+
+  🎯 **Affected Element Details**     Shows which elements are
+                                      responsible for each issue
+
+  📚 **Accessibility Guidance**       Helps developers understand
+                                      accessibility concepts
+
+  📄 **Exportable Reports**           Generates downloadable
+                                      accessibility reports
+
+  🌐 **Web-Based Interface**          Provides accessibility analysis
+                                      through a web interface
+  -----------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 🧠 AI-Powered Accessibility Assistance
+
+Traditional accessibility tools are excellent at **finding problems**.
 
 AccessLens focuses on the next question:
 
-"Okay... now what do I do about it?"
+> **"Okay... now what do I do about it?"**
 
-For every detected issue, AccessLens can provide:
+For every detected issue, AccessLens provides contextual guidance
+around:
 
-What it means
+### What It Means
 
 A plain-English explanation of the accessibility problem.
 
-Why it matters
+### Why It Matters
 
-Explains how the issue can affect users, especially people using assistive technologies.
+Explains how the issue can affect users, particularly people who rely on
+assistive technologies.
 
-How to fix it
+### How to Fix It
 
 Provides practical guidance and code-level recommendations.
 
-Accessibility context
+### Accessibility Context
 
 Connects the issue to relevant accessibility and WCAG concepts.
 
-This makes AccessLens useful not only as an auditing tool, but also as an accessibility learning assistant.
+This makes AccessLens useful not only as an auditing tool, but also as
+an **accessibility learning assistant**.
 
-🏗️ Architecture
+------------------------------------------------------------------------
+
+## 🏗️ Architecture
+
+``` text
                          ┌─────────────────────┐
                          │     Developer       │
-                         │   Website URL       │
+                         │     Website URL     │
                          └──────────┬──────────┘
                                     │
                                     ▼
                          ┌─────────────────────┐
-                         │   AccessLens        │
-                         │     Frontend        │
+                         │     AccessLens      │
+                         │      Frontend       │
                          │ React + Tailwind CSS│
                          └──────────┬──────────┘
                                     │
                                     ▼
                          ┌─────────────────────┐
-                         │      FastAPI        │
-                         │      Backend        │
-                         │       Python        │
+                         │       FastAPI       │
+                         │       Backend       │
+                         │        Python       │
                          └──────────┬──────────┘
                                     │
                   ┌─────────────────┴─────────────────┐
@@ -205,14 +258,14 @@ This makes AccessLens useful not only as an auditing tool, but also as an access
                   └─────────────────┬─────────────────┘
                                     ▼
                          ┌─────────────────────┐
-                         │  Analysis &         │
-                         │  Prioritization     │
+                         │      Analysis &     │
+                         │     Prioritization  │
                          └──────────┬──────────┘
                                     │
                                     ▼
                          ┌─────────────────────┐
-                         │ AccessLens          │
-                         │ Results Dashboard   │
+                         │      AccessLens     │
+                         │   Results Dashboard │
                          └──────────┬──────────┘
                                     │
                          ┌──────────┴──────────┐
@@ -221,138 +274,222 @@ This makes AccessLens useful not only as an auditing tool, but also as an access
                 │ AI Fix         │    │ Export Report  │
                 │ Suggestions    │    │                │
                 └────────────────┘    └────────────────┘
-🛠️ Technology Stack
-Frontend
-React
-JavaScript
-JSX
-HTML5
-CSS3
-Tailwind CSS
-Vite
-Backend
-Python
-FastAPI
-Uvicorn
-REST APIs
-Accessibility Engine
-Lighthouse
-Google PageSpeed Insights API
-WCAG
-Accessibility audit data
-AI Layer
-Google Gemini API
-AI-powered explanation
-Accessibility guidance
-Fix recommendations
-Deployment
-Vercel — Frontend
-Render — Backend
-Development & Configuration
-Git
-GitHub
-JSON
-Environment Variables
-Markdown
-💻 Languages Used
-Language / Format	Usage
-🐍 Python	Backend, FastAPI APIs, accessibility processing
-🟨 JavaScript	Frontend application logic and API integration
-⚛️ JSX	React components and UI
-🌐 HTML5	Web structure
-🎨 CSS3	Styling
-🟦 JSON	API data, configuration, mock data
-📝 Markdown	Documentation and README
-📸 Screenshots
-🏠 AccessLens Home
+```
 
-The landing interface allows developers to enter a public website URL and start an accessibility scan.
+------------------------------------------------------------------------
 
-📊 Accessibility Results
+## 🛠️ Technology Stack
+
+### Frontend
+
+-   React
+-   JavaScript
+-   JSX
+-   HTML5
+-   CSS3
+-   Tailwind CSS
+-   Vite
+
+### Backend
+
+-   Python
+-   FastAPI
+-   Uvicorn
+-   REST APIs
+
+### Accessibility Engine
+
+-   Lighthouse
+-   Google PageSpeed Insights API
+-   WCAG
+-   Accessibility audit data
+
+### AI Layer
+
+-   Google Gemini API
+-   AI-powered explanations
+-   Accessibility guidance
+-   Fix recommendations
+
+### Deployment
+
+-   **Vercel** --- Frontend
+-   **Render** --- Backend
+
+### Development & Configuration
+
+-   Git
+-   GitHub
+-   JSON
+-   Environment Variables
+-   Markdown
+
+------------------------------------------------------------------------
+
+## 💻 Languages & Formats Used
+
+  Language / Format   Usage
+  ------------------- -----------------------------------------------------
+  🐍 **Python**       Backend, FastAPI APIs, and accessibility processing
+  🟨 **JavaScript**   Frontend application logic and API integration
+  ⚛️ **JSX**          React components and UI
+  🌐 **HTML5**        Web structure
+  🎨 **CSS3**         Styling
+  🟦 **JSON**         API data, configuration, and mock data
+  📝 **Markdown**     Documentation
+
+------------------------------------------------------------------------
+
+## 📸 Screenshots
+
+### 🏠 AccessLens Home
+
+The landing interface allows developers to enter a public website URL
+and start an accessibility scan.
+
+![AccessLens Home](screenshots/home.png)
+
+------------------------------------------------------------------------
+
+### 📊 Accessibility Results
 
 The results dashboard provides:
 
-Overall accessibility score
-Critical issues
-Moderate issues
-Minor issues
-WCAG criteria
-Affected elements
-Issue descriptions
-🤖 AI-Powered Explanation
+-   Overall accessibility score
+-   Critical issues
+-   Moderate issues
+-   Minor issues
+-   WCAG criteria
+-   Affected elements
+-   Issue descriptions
 
-AccessLens translates technical accessibility findings into plain-English explanations and actionable guidance.
+![AccessLens Results](screenshots/results.png)
 
-📄 Accessibility Report
+------------------------------------------------------------------------
 
-Developers can review and export the accessibility analysis as a structured report.
+### 🤖 AI-Powered Explanation
 
-🚀 Running AccessLens Locally
-1. Clone the repository
+AccessLens transforms technical accessibility violations into
+plain-English explanations and actionable guidance.
+
+![AI-Powered Explanation](screenshots/ai-explanation.png)
+
+------------------------------------------------------------------------
+
+### 📄 Accessibility Report
+
+The report provides a structured summary of the accessibility analysis
+and detected issues.
+
+![Accessibility Report](screenshots/report.png)
+
+------------------------------------------------------------------------
+
+## 🚀 Running AccessLens Locally
+
+### 1. Clone the Repository
+
+``` bash
 git clone https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens.git
 cd hackmatrix-2026-acesslens
-🔹 Backend Setup
+```
 
-Navigate to the backend:
+### 2. Backend Setup
 
+``` bash
 cd backend
+```
 
 Create a virtual environment:
 
-Windows
+``` powershell
 python -m venv .venv
+```
 
 Activate it:
 
+``` powershell
 .venv\Scripts\Activate.ps1
+```
 
 Install dependencies:
 
+``` powershell
 pip install -r requirements.txt
+```
 
 Run the backend:
 
+``` powershell
 uvicorn app.main:app --reload --port 8000
+```
 
-The backend will run locally at:
+Backend:
 
+``` text
 http://localhost:8000
-🔹 Frontend Setup
+```
 
-Open another terminal.
+### 3. Frontend Setup
 
-Navigate to the frontend:
+Open another terminal:
 
+``` bash
 cd frontend
-
-Install dependencies:
-
 npm install
+```
 
-Create/configure the environment file:
+Configure the frontend environment:
 
+``` env
 VITE_API_BASE_URL=http://localhost:8000
 VITE_USE_MOCK_DATA=false
+```
 
 Start the development server:
 
+``` bash
 npm run dev
+```
 
-The frontend will normally be available at:
+Frontend:
 
+``` text
 http://localhost:5173
-🔐 Environment Variables
-Frontend
+```
+
+------------------------------------------------------------------------
+
+## 🔐 Environment Variables
+
+### Frontend
+
+``` env
 VITE_API_BASE_URL=<BACKEND_URL>
 VITE_USE_MOCK_DATA=false
-Backend
+```
+
+### Backend
 
 Configure the required API credentials through environment variables.
 
-⚠️ Never commit API keys or other secrets to GitHub.
+> ⚠️ **Never commit API keys or other secrets to GitHub.**
 
-📁 Repository Structure
+------------------------------------------------------------------------
+
+## 📁 Repository Structure
+
+``` text
 hackmatrix-2026-acesslens/
+│
+├── README.md
+├── AcessLens.pptx
+│
+├── screenshots/
+│   ├── home.png
+│   ├── results.png
+│   ├── ai-explanation.png
+│   └── report.png
 │
 ├── frontend/
 │   ├── src/
@@ -361,45 +498,52 @@ hackmatrix-2026-acesslens/
 │   │   ├── services/
 │   │   ├── mocks/
 │   │   └── ...
-│   ├── public/
 │   ├── package.json
 │   └── ...
 │
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── routes/
-│   │   ├── services/
-│   │   └── ...
-│   ├── requirements.txt
-│   └── ...
-│
-├── screenshots/
-│   ├── home.png
-│   ├── results.png
-│   ├── ai-explanation.png
-│   └── report.png
-│
-├── AcessLens.pptx
-├── README.md
-└── .gitignore
-📦 Deliverables
-Deliverable	Details
-🌐 Live Application	Deployed AccessLens web application
-📄 Project PPT	AcessLens.pptx
-🎥 Demo Video	Complete product walkthrough
-💻 Source Code	Frontend + backend available in this repository
-📸 Screenshots	Product workflow and dashboard screenshots
-🌍 Deployment
-Frontend
+└── backend/
+    ├── app/
+    │   ├── main.py
+    │   ├── routers/
+    │   ├── services/
+    │   └── ...
+    ├── requirements.txt
+    └── ...
+```
 
-The AccessLens frontend is deployed using Vercel.
+------------------------------------------------------------------------
 
-Backend
+## 📦 Deliverables
 
-The AccessLens backend is deployed using Render.
+  ---------------------------------------------------------------------------------------
+  Deliverable                         Details
+  ----------------------------------- ---------------------------------------------------
+  🌐 **Live Application**             [AccessLens](https://accesslens-nine.vercel.app/)
 
-Production Flow
+  📄 **Project PPT**                  [AcessLens.pptx](AcessLens.pptx)
+
+  🎥 **Demo Video**                   [Watch Demo](YOUR_DEMO_VIDEO_LINK)
+
+  💻 **Source Code**                  Frontend and backend available in this repository
+
+  📸 **Screenshots**                  Product workflow and dashboard screenshots
+  ---------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+## 🌍 Deployment
+
+### Frontend
+
+The AccessLens frontend is deployed using **Vercel**.
+
+### Backend
+
+The AccessLens backend is deployed using **Render**.
+
+### Production Flow
+
+``` text
 User
  │
  ▼
@@ -422,64 +566,82 @@ Frontend Dashboard
  ├── AI Explanation
  ├── Fix Suggestions
  └── Export Report
-🎯 Why AccessLens?
+```
+
+------------------------------------------------------------------------
+
+## 🎯 Why AccessLens?
 
 Accessibility tools should not stop at:
 
-"Here is what's wrong."
+> **"Here is what's wrong."**
 
 They should help developers reach:
 
-"Here is why it matters — and here is how to fix it."
+> **"Here is why it matters --- and here is how to fix it."**
 
-AccessLens reduces the gap between accessibility detection and accessibility action.
+AccessLens reduces the gap between **accessibility detection and
+accessibility action**.
 
 It makes accessibility:
 
-Easier to understand
-Easier to prioritize
-Easier to fix
-Easier to learn
-🌱 Social Impact
+-   Easier to understand
+-   Easier to prioritize
+-   Easier to fix
+-   Easier to learn
 
-AccessLens aims to contribute to a more inclusive digital ecosystem by helping developers build websites that work better for everyone.
+------------------------------------------------------------------------
 
-Impact
-♿ Promotes digital inclusion
-🌐 Encourages accessible web development
-📚 Makes accessibility easier for beginners to learn
-⚡ Reduces the time required to understand accessibility issues
-📋 Encourages WCAG-aware development
-💻 Helps developers turn audit results into actionable fixes
-🔮 Future Scope
+## 🌱 Social Impact
 
-AccessLens can evolve beyond a standalone web application.
+AccessLens aims to contribute to a more inclusive digital ecosystem by
+helping developers build websites that work better for everyone.
 
-Planned possibilities
-🌐 Browser Extension
-Scan the current webpage directly from the browser.
-💻 VS Code Extension
-Detect accessibility issues while developers write code.
-🔄 CI/CD Integration
-Automatically scan websites during development and deployment pipelines.
-🏢 Enterprise Dashboard
-Track accessibility across multiple websites and projects.
-📈 Accessibility History
-Track accessibility scores and improvements over time.
-🤖 AI-Assisted Remediation
-Move from recommending fixes toward generating safer, developer-reviewed patches.
-👥 Team NEXORA
-Member	Role
-Shreelakshmi Prabhu	Development & Integration
-Shivani B	Development
-Minvitha	Development
-Diya Sajin	Development
-🏁 Conclusion
+### Impact
 
-AccessLens is more than an accessibility scanner.
+-   ♿ Promotes digital inclusion
+-   🌐 Encourages accessible web development
+-   📚 Makes accessibility easier for beginners to learn
+-   ⚡ Reduces the time required to understand accessibility issues
+-   📋 Encourages WCAG-aware development
+-   💻 Helps developers turn audit results into actionable fixes
+
+------------------------------------------------------------------------
+
+## 🔮 Future Scope
+
+-   🌐 **Browser Extension** --- Scan the current webpage directly from
+    the browser.
+-   💻 **VS Code Extension** --- Detect accessibility issues while
+    developers write code.
+-   🔄 **CI/CD Integration** --- Automatically scan websites during
+    development and deployment.
+-   🏢 **Enterprise Dashboard** --- Track accessibility across multiple
+    websites and projects.
+-   📈 **Accessibility History** --- Track accessibility scores and
+    improvements over time.
+-   🤖 **AI-Assisted Remediation** --- Move from recommending fixes
+    toward generating safer, developer-reviewed patches.
+
+------------------------------------------------------------------------
+
+## 👥 Team NEXORA
+
+| Member | Role |
+|---|---|
+| **Shreelakshmi Prabhu** | Frontend & Integration |
+| **Shivani B** | Frontend & Backend |
+| **Minvitha** | Backend |
+| **Diya Sajin** | Presentation & Documentation |
+------------------------------------------------------------------------
+
+## 🏁 Conclusion
+
+**AccessLens is more than an accessibility scanner.**
 
 It is an accessibility assistant designed to turn:
 
+``` text
 Audit Results
       ↓
 Understanding
@@ -489,34 +651,37 @@ Prioritization
 Actionable Fixes
       ↓
 Accessible Websites
+```
 
 Because accessibility should not be a checkbox.
 
-It should be built into the web. ♿🌐
-📚 Standards & Technologies
-WCAG — Web Content Accessibility Guidelines
-Lighthouse accessibility auditing
-Google PageSpeed Insights
-FastAPI
-React
-Tailwind CSS
-Google Gemini
-Vercel
-Render
-⭐ Support the Project
+### **It should be built into the web. ♿🌐**
 
-If AccessLens helped you understand or improve web accessibility, consider giving the repository a ⭐.
+------------------------------------------------------------------------
 
-Built with ❤️ by Team NEXORA
-HackMatrix 2K26
+## 📚 Standards & Technologies
 
-### ⚠️ Two things you MUST change before committing
+-   WCAG --- Web Content Accessibility Guidelines
+-   Lighthouse accessibility auditing
+-   Google PageSpeed Insights
+-   FastAPI
+-   React
+-   Tailwind CSS
+-   Google Gemini
+-   Vercel
+-   Render
 
-**1. Demo video**
+------------------------------------------------------------------------
 
-I don't have your actual video URL, so I deliberately used:
+## ⭐ Support the Project
 
-```text
-YOUR_DEMO_VIDEO_LINK
+If AccessLens helped you understand or improve web accessibility,
+consider giving the repository a ⭐.
 
-Don't leave that in the final README. Replace it with your YouTube/Google Drive link.
+------------------------------------------------------------------------
+
+::: {align="center"}
+### Built with ❤️ by Team NEXORA
+
+**HackMatrix 2K26**
+:::
