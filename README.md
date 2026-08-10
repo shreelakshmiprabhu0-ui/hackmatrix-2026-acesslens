@@ -1,6 +1,6 @@
 # ♿ AccessLens
 
-::: {align="center"}
+
 ### AI-Powered Web Accessibility Assistant
 
 **Making the web understandable, actionable, and accessible --- one
@@ -10,7 +10,7 @@ website at a time.**
 
 [🌐 Live Demo](https://accesslens-nine.vercel.app/) · [📂 GitHub
 Repository](https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens)
-:::
+
 
 > AccessLens scans websites for accessibility violations, translates
 > complex WCAG findings into plain English, prioritizes what matters
