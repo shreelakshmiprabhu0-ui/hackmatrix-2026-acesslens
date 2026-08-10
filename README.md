@@ -26,7 +26,7 @@ Repository](https://github.com/shreelakshmiprabhu0-ui/hackmatrix-2026-acesslens)
 
 ## 🎥 Demo Video
 
-▶️ **[Watch the AccessLens Demo Video](YOUR_DEMO_VIDEO_LINK)**
+▶️ **[Watch the AccessLens Demo Video](https://drive.google.com/drive/folders/1N2fWBrs4e2lNavcD-zNutwO5odLBNnjk?usp=drive_link)**
 
 ## 📚 Project Documentation
 
